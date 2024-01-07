@@ -1,0 +1,17 @@
+{
+  "name": "batch-auto-mrc20",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mysten/sui.js": "0.48.1",
+    "node-fetch": "2.7.0"
+  }
+}
