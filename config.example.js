@@ -1,12 +1,15 @@
+const { SuiToG } = require('./lib')
+
 const config = {
   packageID: '0xebbba763f5fc01d90c2791c03536a373791b634600e81d4e08b85f275f1274fa', // 合约 id
   recordID: '0x9273c998c38720b95769331fd506084879e128161f976ba2c3666526c0e73175', // token id
   content: 'IKUN', // 铭文字符
-  mintFee: 0, // 100000000; // 0.01 SUI // 要质押的 sui
+  mintFee: SuiToG(0), // 要质押的 sui
   walletMemonicSeedList: [], // 助记词
   repeatCount: 500, // 单个钱包要 mint 几张
-  sleepTime: 1000 * 65, // 时间间隔，毫秒
+  sleepTime: 1000 * 62, // 时间间隔，毫秒
   rpcUrl: 'https://mainnet.sui.rpcpool.com',
+  checkProcessTimeMs: 1000 * 60 * 3, // 进度检查时间间隔
   // rpcUrlList: [],
 }
 

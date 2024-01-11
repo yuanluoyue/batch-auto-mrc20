@@ -4,7 +4,7 @@ const { TransactionBlock } = require('@mysten/sui.js/transactions')
 
 const fetch = require('node-fetch')
 
-const { sleepMS, get_current_epoch } = require('./lib')
+const { sleepMS, checkIsMintFinished } = require('./lib')
 const config = require('./config')
 
 const MINT_FEE = config.mintFee
@@ -18,7 +18,6 @@ if (!globalThis.fetch) {
 }
 
 async function executeTransaction(suiClient, keypair) {
-  const current_epoch = await get_current_epoch(suiClient)
   const txb = new TransactionBlock()
   const [coin] = txb.splitCoins(txb.gas, [MINT_FEE])
 
@@ -27,18 +26,10 @@ async function executeTransaction(suiClient, keypair) {
     arguments: [txb.object(TickRecordID), txb.pure(TICK), coin, txb.pure('0x6')],
   })
 
-  const result = await suiClient.signAndExecuteTransactionBlock({
+  await suiClient.signAndExecuteTransactionBlock({
     transactionBlock: txb,
     signer: keypair,
   })
-
-  const transactionBlock = await suiClient.waitForTransactionBlock({
-    digest: result.digest,
-    options: {
-      showEffects: true,
-    },
-  })
-  console.log(`current epoch: ${current_epoch}`)
 }
 
 const getKeypairList = () => {
@@ -67,8 +58,23 @@ const main = async () => {
 
   await checkWallet(keypairList, suiClient)
   console.log('-----------------------')
+
+  const isFinished = await checkIsMintFinished(suiClient, config.recordID)
+  if (isFinished) {
+    console.log('进度已满，无法继续铸造')
+    return
+  }
+
+  console.log('-----------------------')
   console.log('请确认钱包地址，20 秒后开始铸造', 'token: ', config.content)
   await sleepMS(20 * 1000)
+
+  setInterval(async () => {
+    const isFinished = await checkIsMintFinished(suiClient, config.recordID)
+    if (isFinished || Math.random() > 0.5) {
+      throw Error('进度已满，无法继续铸造')
+    }
+  }, config.checkProcessTimeMs)
 
   for (let i = 0; i < config.repeatCount; i++) {
     for (const keypair of keypairList) {
@@ -79,7 +85,7 @@ const main = async () => {
       } catch (err) {
         console.log('mint 失败：', keypair.toSuiAddress(), err)
       }
-      await sleepMS(Math.random() * 1.5 * 1000)
+      await sleepMS(Math.random() * 1 * 1000)
     }
     await sleepMS(config.sleepTime + Math.random() * 0.5 * 1000)
   }
